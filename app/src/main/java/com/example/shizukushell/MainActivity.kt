@@ -2,12 +2,11 @@ package com.example.shizukushell
 
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.ParcelFileDescriptor
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import androidx.appcompat.app.AppCompatActivity
 import com.example.shizukushell.databinding.ActivityMainBinding
 import rikka.shizuku.Shizuku
-import rikka.shizuku.ShizukuRemoteProcess
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
@@ -73,6 +72,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // newProcess is private in the Shizuku API, so we call it via reflection
+    private fun newShizukuProcess(cmd: Array<String>): Process {
+        val method = Shizuku::class.java.getDeclaredMethod(
+            "newProcess",
+            Array<String>::class.java,
+            Array<String>::class.java,
+            String::class.java
+        )
+        method.isAccessible = true
+        return method.invoke(null, cmd, null, null) as Process
+    }
+
     private fun runCommand() {
         val cmd = binding.etCommand.text.toString().trim()
         if (cmd.isEmpty()) return
@@ -91,11 +102,7 @@ class MainActivity : AppCompatActivity() {
 
         Thread {
             try {
-                val process = Shizuku.newProcess(
-                    arrayOf("sh", "-c", cmd),
-                    null,
-                    null
-                )
+                val process = newShizukuProcess(arrayOf("sh", "-c", cmd))
 
                 val stdout = BufferedReader(InputStreamReader(process.inputStream))
                 val stderr = BufferedReader(InputStreamReader(process.errorStream))
@@ -122,7 +129,7 @@ class MainActivity : AppCompatActivity() {
         outputBuilder.append(text)
         binding.tvOutput.text = outputBuilder.toString()
         binding.scrollView.post {
-            binding.scrollView.fullScroll(android.view.View.FOCUS_DOWN)
+            binding.scrollView.fullScroll(View.FOCUS_DOWN)
         }
     }
 
