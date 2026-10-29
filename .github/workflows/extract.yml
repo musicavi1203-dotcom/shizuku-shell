@@ -1,0 +1,36 @@
+name: Extract zip
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unzip project
+        run: |
+          unzip -o shizuku-shell.zip -d tmp_extract
+          cp -r tmp_extract/shizuku-shell/. .
+          rm -rf tmp_extract shizuku-shell.zip
+          find . -maxdepth 1 -name '{*' -exec rm -rf {} +
+
+      - name: Generate real Gradle wrapper
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.4
+      - run: |
+          gradle wrapper --gradle-version 8.4
+          chmod +x gradlew
+
+      - name: Commit extracted files
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -m "Extract shizuku-shell project" || echo "nothing to commit"
+          git push
