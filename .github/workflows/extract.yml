@@ -16,6 +16,7 @@ jobs:
         run: |
           unzip -o shizuku-shell.zip -d tmp_extract
           cp -r tmp_extract/shizuku-shell/. .
+          rm -f gradle/wrapper/gradle-wrapper.jar
           rm -rf tmp_extract shizuku-shell.zip
           find . -maxdepth 1 -name '{*' -exec rm -rf {} +
 
